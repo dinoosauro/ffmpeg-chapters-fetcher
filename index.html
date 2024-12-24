@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --font: 'Work Sans', sans-serif;
+            --background: #151515;
+            --input: #353535;
+            --text: #fafafa;
+            --accent: #1f5e92;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            font-family: var(--font);
+            padding: 10px;
+        }
+
+        textarea,
+        button,
+        input:not([type=checkbox]) {
+            width: 100%;
+            width: -webkit-fill-available;
+            width: -moz-available;
+            font-family: var(--font);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--text);
+            color: var(--text);
+        }
+
+        button {
+            background-color: var(--accent);
+        }
+
+        textarea,
+        input {
+            background-color: var(--input);
+        }
+
+        textarea {
+            height: 25vh;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .hcenter {
+            align-items: center;
+        }
+
+        .gap {
+            gap: 10px;
+        }
+
+        a {
+            color: var(--text)
+        }
+    </style>
+    <title>FFmpeg Chapter</title>
+</head>
+
+<body>
+    <h1>FFmpeg Chapter Creator</h1>
+    <p>Paste the description timestamps here:</p>
+    <textarea id="text"></textarea><br><br>
+    <label class="flex hcenter gap">
+        Divider:
+        <input id="divider" type="text">
+    </label><br>
+    <label class="flex hcenter gap">
+        Video length (in HH:MM:ss):
+        <input type="text" id="length">
+        <button id="getLength">Get from video</button>
+    </label><br>
+    <label class="flex hcenter gap">
+        <input type="checkbox" id="timestampRight"> The timestamp is at the right
+    </label>
+    <br><br>
+    <button id="download">Download FFmetadata text</button><br><br>
+    <p>You can add metadata in this way:
+        <code>ffmpeg -i video.mp4 -ffmetadata -i ffmetadata.txt -map_metadata 1 -c copy out.mp4</code>
+    </p>
+    <p>You can find more on the <a target="_blank" href="https://github.com/dinoosauro/ffmpeg-chapters-fetcher">GitHub
+            repository</a></p>
+    <script>
+        document.getElementById("download").onclick = () => {
+            let str = ";FFMETADATA1";
+            const divider = document.getElementById("divider").value;
+            const textSplit = document.getElementById("text").value;
+            const textSplitted = textSplit.split("\n");
+            for (let i = 0; i < textSplitted.length; i++) {
+                const currentStr = textSplitted[i];
+                const { timestamp, text } = getTimestampAndText(currentStr, divider);
+                if (currentStr.indexOf(divider) === -1) continue;
+                str += `\n[CHAPTER]\nTIMEBASE=1/1000000000\nSTART=${formatTimestamp(timestamp)}\nEND=${formatTimestamp(textSplitted[i + 1] ? getTimestampAndText(textSplitted[i + 1], divider).timestamp : (document.getElementById("length").value.trim() || "0"))}\ntitle=${text}`;
+            }
+            Object.assign(document.createElement("a"), {
+                href: URL.createObjectURL(new Blob([str], { type: "text/plain" })),
+                download: "ffmetadata.txt"
+            }).click();
+        }
+        function getTimestampAndText(str, divider) {
+            const isTimestampAtRight = document.getElementById("timestampRight").checked;
+            const timestamp = str.substring(isTimestampAtRight ? str.lastIndexOf(divider) + divider.length : 0, isTimestampAtRight ? undefined : str.indexOf(divider));
+            const text = str.substring(isTimestampAtRight ? 0 : str.indexOf(divider) + divider.length, isTimestampAtRight ? str.lastIndexOf(divider) : undefined);
+            return { timestamp, text };
+        }
+        function formatTimestamp(timestamp) {
+            let returnInt = 0;
+            const splittedTimestamp = timestamp.split(":");
+            if (splittedTimestamp.length === 3) returnInt = (+splittedTimestamp[0] * 3600) + (+splittedTimestamp[1] * 60) + +splittedTimestamp[2]; else returnInt = (+splittedTimestamp[0] * 60) + +splittedTimestamp[1];
+            return `${returnInt}000000000`;
+        }
+        document.getElementById("getLength").onclick = () => {
+            Object.assign(document.createElement("input"), {
+                type: "file",
+                onchange: function (e) {
+                    const video = Object.assign(document.createElement("video"), {
+                        src: URL.createObjectURL(e.target.files[0]),
+                        onloadedmetadata: function (e) {
+                            let duration = e.target.duration;
+                            let outputFormat = "";
+                            let hoursAdded = false;
+                            if (duration >= 3600) {
+                                const hours = Math.floor(duration / 3600);
+                                duration -= (hours * 3600);
+                                outputFormat += `${hours}:`;
+                                hoursAdded = true;
+                            }
+                            if (duration < 60 && hoursAdded) hoursAdded += "00:";
+                            if (duration >= 60) {
+                                const minutes = Math.floor(duration / 60);
+                                duration -= (minutes * 60);
+                                outputFormat += `${minutes}:`;
+                            }
+                            outputFormat += `${Math.floor(duration)}`;
+                            document.getElementById("length").value = outputFormat;
+                        }
+                    })
+                }
+            }).click();
+        }
+    </script>
+</body>
+
+</html>
