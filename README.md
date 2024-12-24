@@ -3,6 +3,8 @@
 Convert a normal timestamp list in a ffmetadata file that can be used to add
 timestamps using ffmpeg.
 
+Try it now: https://dinoosauro.github.io/ffmpeg-chapters-fetcher/
+
 ## What this website does
 
 Let's say you've got a timestamp list:
