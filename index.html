@@ -35,9 +35,21 @@
             color: var(--text);
         }
 
+
         button {
             background-color: var(--accent);
+            transition: 0.2s ease-in-out;
         }
+
+        button:hover {
+            filter: brightness(150%);
+        }
+
+        button:active {
+            filter: brightness(175%);
+            scale: 0.95;
+        }
+
 
         textarea,
         input {
@@ -69,7 +81,8 @@
 
 <body>
     <h1>FFmpeg Chapter Creator</h1>
-    <p>Paste the description timestamps here:</p>
+    <p>Paste the description timestamps here, or <span id="fileRead" style="text-decoration: underline;">read from a
+            file</span></p>
     <textarea id="text"></textarea><br><br>
     <label class="flex hcenter gap">
         Divider:
@@ -145,6 +158,15 @@
                             document.getElementById("length").value = outputFormat;
                         }
                     })
+                }
+            }).click();
+        }
+        document.getElementById("fileRead").onclick = () => {
+            console.log("Click");
+            Object.assign(document.createElement("input"), {
+                type: "file",
+                onchange: async function (e) {
+                    document.getElementById("text").value = await e.target.files[0].text();
                 }
             }).click();
         }
