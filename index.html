@@ -165,11 +165,11 @@
             }).click();
         }
         document.getElementById("fileRead").onclick = () => {
-            console.log("Click");
             Object.assign(document.createElement("input"), {
                 type: "file",
                 onchange: async function (e) {
-                    document.getElementById("text").value = await e.target.files[0].text();
+                    const text = await e.target.files[0].text();
+                    document.getElementById("text").value = text;
                 }
             }).click();
         }
