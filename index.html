@@ -97,7 +97,14 @@
         <input type="checkbox" id="timestampRight"> The timestamp is at the right
     </label>
     <br><br>
-    <button id="download">Download FFmetadata text</button><br><br>
+    <div class="flex gap">
+        <button id="download">Download FFmetadata
+            text</button>
+        <button id="share">Share file</button>
+    </div>
+    <div>
+    </div>
+    <br><br>
     <p>You can add metadata in this way:
         <code>ffmpeg -i video.mp4 -ffmetadata -i ffmetadata.txt -map_metadata 1 -c copy out.mp4</code><br>Otherwise,
         <a target="_blank" href="https://dinoosauro.github.io/ffmpeg-merge-command/">click here to automatically
@@ -107,7 +114,7 @@
     <p>You can find more on the <a target="_blank" href="https://github.com/dinoosauro/ffmpeg-chapters-fetcher">GitHub
             repository</a></p>
     <script>
-        document.getElementById("download").onclick = () => {
+        function getStr() {
             let str = ";FFMETADATA1";
             const divider = document.getElementById("divider").value;
             const textSplit = document.getElementById("text").value;
@@ -118,10 +125,18 @@
                 if (currentStr.indexOf(divider) === -1) continue;
                 str += `\n[CHAPTER]\nTIMEBASE=1/1000000000\nSTART=${formatTimestamp(timestamp)}\nEND=${formatTimestamp(textSplitted[i + 1] ? getTimestampAndText(textSplitted[i + 1], divider).timestamp : (document.getElementById("length").value.trim() || "0"))}\ntitle=${text}`;
             }
+            return str;
+        }
+        document.getElementById("download").onclick = () => {
             Object.assign(document.createElement("a"), {
-                href: URL.createObjectURL(new Blob([str], { type: "text/plain" })),
-                download: "ffmetadata.txt"
+                href: URL.createObjectURL(new Blob([getStr()], { type: "text/plain" })),
+                download: `ffmetadata-${Date.now()}.txt`
             }).click();
+        };
+        document.getElementById("share").onclick = () => {
+            navigator.share({
+                files: [new File(getStr(), `ffmetadata-${Date.now()}.txt`, { type: "text/plain" })]
+            });
         }
         function getTimestampAndText(str, divider) {
             const isTimestampAtRight = document.getElementById("timestampRight").checked;
